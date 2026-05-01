@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Sketch Runner 199K</title>
+<style>
+body{
+  margin:0;
+  background:#0f172a;
+  color:white;
+  text-align:center;
+  font-family:Arial;
+}
+canvas{
+  display:block;
+  margin:10px auto;
+  border-radius:12px;
+}
+button{
+  padding:12px;
+  margin:5px;
+  border:none;
+  border-radius:10px;
+  font-weight:bold;
+}
+</style>
+</head>
+<body>
+
+<h2>🎮 Sketch Runner 199K</h2>
+
+<div id="drawUI">
+<p>Нарисуй персонажа</p>
+<canvas id="draw" width="300" height="300" style="background:white"></canvas>
+<br>
+<button onclick="clearDraw()">Очистить</button>
+<button onclick="startGame()">Оживить</button>
+</div>
+
+<div id="gameUI" style="display:none">
+<p id="msg">Выживай 😈</p>
+<canvas id="game" width="600" height="300"></canvas>
+</div>
+
+<script>
+// ---------- DRAW ----------
+const drawCanvas = document.getElementById("draw");
+const dctx = drawCanvas.getContext("2d");
+let drawing=false;
+
+drawCanvas.onmousedown = ()=> drawing=true;
+drawCanvas.onmouseup = ()=> drawing=false;
+drawCanvas.onmousemove = (e)=>{
+  if(!drawing) return;
+  let rect = drawCanvas.getBoundingClientRect();
+  dctx.fillStyle="black";
+  dctx.fillRect(e.clientX-rect.left, e.clientY-rect.top, 4,4);
+};
+
+function clearDraw(){
+  dctx.fillStyle="white";
+  dctx.fillRect(0,0,300,300);
+}
+
+// ---------- GAME ----------
+let player, obstacles=[], chaos=[], gameOver=false;
+let gravity=0.6, speed=4, flip=false, autoJump=false;
+let score=0, level=1;
+
+function startGame(){
+  document.getElementById("drawUI").style.display="none";
+  document.getElementById("gameUI").style.display="block";
+
+  player = {x:60,y:200,w:30,h:30,vy:0};
+  obstacles=[];
+  chaos=[];
+  gameOver=false;
+  score=0;
+
+  loop();
+}
+
+function spawnObstacle(){
+  obstacles.push({x:600,y:220,w:30,h:30});
+}
+
+function spawnChaos(){
+  chaos.push({
+    x:Math.random()*600,
+    y:-40,
+    vx:(Math.random()-0.5)*5,
+    vy:Math.random()*4+2,
+    size:20
+  });
+}
+
+function loop(){
+  const ctx = document.getElementById("game").getContext("2d");
+  ctx.clearRect(0,0,600,300);
+
+  if(gameOver){
+    ctx.fillText("💀 GAME OVER (клик = рестарт)",200,150);
+    return;
+  }
+
+  // гравитация
+  player.vy += flip ? -gravity : gravity;
+  player.y += player.vy;
+
+  if(!flip && player.y>200){ player.y=200; player.vy=0;}
+  if(flip && player.y<50){ player.y=50; player.vy=0;}
+
+  // хаос
+  if(Math.random()<0.03) spawnObstacle();
+  if(Math.random()<0.02) spawnChaos();
+
+  // троллинг
+  if(Math.random()<0.005){
+    flip=!flip;
+    msg("Гравитация сломалась 😈");
+  }
+
+  if(Math.random()<0.005){
+    autoJump=!autoJump;
+    msg("Он живой...");
+  }
+
+  if(autoJump && Math.random()<0.05){
+    player.vy = flip ? 10 : -10;
+  }
+
+  // obstacles
+  obstacles.forEach(o=>{
+    o.x -= speed;
+    ctx.fillStyle="red";
+    ctx.fillRect(o.x,o.y,o.w,o.h);
+    if(hit(player,o)) gameOver=true;
+  });
+
+  // chaos objects
+  chaos.forEach(c=>{
+    c.x += c.vx;
+    c.y += c.vy;
+    ctx.fillStyle="yellow";
+    ctx.fillRect(c.x,c.y,c.size,c.size);
+    if(hit(player,c)) gameOver=true;
+  });
+
+  // игрок
+  ctx.fillStyle="cyan";
+  ctx.fillRect(player.x,player.y,player.w,player.h);
+
+  score++;
+  if(score % 500 === 0){
+    level++;
+    speed += 0.5;
+    msg("Уровень "+level);
+  }
+
+  ctx.fillText("Score: "+score,10,20);
+
+  requestAnimationFrame(loop);
+}
+
+function hit(a,b){
+  return a.x<b.x+b.w &&
+         a.x+a.w>b.x &&
+         a.y<b.y+b.h &&
+         a.y+a.h>b.y;
+}
+
+function msg(text){
+  document.getElementById("msg").innerText = text;
+}
+
+// управление
+document.addEventListener("click", ()=>{
+  if(gameOver){
+    location.reload();
+  } else {
+    player.vy = flip ? 10 : -10;
+  }
+});
+</script>
+
+</body>
+</html>
