@@ -4,143 +4,192 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>D Burger</title>
-
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
+*{box-sizing:border-box}
 body{margin:0;font-family:Arial;background:#111;color:#fff}
-.header{padding:20px;background:#1a1a1a}
-.logo{width:50px;height:50px;border-radius:50%;background:red;display:flex;align-items:center;justify-content:center;font-size:30px}
-.hero{height:120px;background:orange;margin:10px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:60px}
-.menu{padding:10px}
-.item{text-align:center;margin-bottom:20px}
-button{padding:10px;border-radius:10px;border:0;margin:5px;font-size:16px}
-.add{background:#ffae16;color:#fff}
-.minus{background:#ef4444;color:#fff}
-.pay{background:#2db84d;color:#fff}
-.support{background:#ffae16;color:#fff}
-.cancel{background:#444;color:#fff}
-.bottom{position:fixed;bottom:0;width:100%;background:#2db84d;padding:15px;text-align:center}
+.header{padding:16px;background:#1a1a1a}
+.logo{width:50px;height:50px;border-radius:50%;background:#e21d1d;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;color:#ffc400}
+.hero{margin-top:10px;height:120px;border-radius:10px;background:linear-gradient(135deg,#ff8a1d,#a73512);display:flex;align-items:center;justify-content:center;font-size:70px}
+.pay{margin:10px;padding:14px;background:#1d1d1d;border-radius:12px;text-align:center;font-size:22px;font-weight:900}
+.menu{background:#171717;border-radius:20px 20px 0 0;padding:16px 10px 100px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px 10px}
+.item{text-align:center;position:relative}
+.pic{font-size:60px}
+.name{font-size:18px;font-weight:900}
+.price{font-size:14px;color:#ccc}
+.add{width:100%;padding:10px;margin-top:6px;border:0;border-radius:10px;background:#ffae16;color:#fff;font-weight:900}
+.qtyBox{display:flex;justify-content:center;gap:6px;margin-top:6px}
+.smallBtn{width:40px;height:36px;border:0;border-radius:8px;font-size:22px;color:#fff}
+.minus{background:#ef4444}
+.plus{background:#ffae16}
+.badge{position:absolute;top:-5px;right:15px;background:#ffae16;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-weight:900}
+.bottom{position:fixed;bottom:0;left:0;right:0;background:#2db84d;padding:14px}
+.bottom button{width:100%;border:0;background:transparent;color:#fff;font-size:20px;font-weight:900}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:flex-end}
-.sheet{background:#111;width:100%;padding:20px;border-radius:20px 20px 0 0}
+.sheet{background:#171717;width:100%;border-radius:20px 20px 0 0;padding:16px}
+.row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #333}
+.total{font-size:22px;font-weight:900;margin:10px 0}
+button.action{width:100%;border:0;border-radius:10px;padding:12px;margin:5px 0;font-size:16px;font-weight:900}
+.cancel{background:#444;color:#fff}
+.payBtn{background:#2db84d;color:#fff}
+.support{background:#ffae16;color:#fff}
 </style>
 </head>
 
 <body>
 
 <div class="header">
-<div class="logo">D</div>
-<div class="hero">🍔🍟</div>
+  <div class="logo" id="logo">D</div>
+  <div class="hero">🍔🍟</div>
 </div>
 
-<div id="payText">Pay $0</div>
+<div class="pay" id="payText">Pay $0.00</div>
 
-<div class="menu" id="menu"></div>
+<div class="menu">
+  <div class="grid" id="menuGrid"></div>
+</div>
 
 <div class="bottom">
-<button onclick="openOrder()">VIEW ORDER</button>
+  <button onclick="openOrder()">VIEW ORDER</button>
 </div>
 
 <div class="modal" id="modal">
-<div class="sheet">
-<div id="orderList"></div>
+  <div class="sheet">
+    <div id="orderList"></div>
+    <div class="total" id="totalText"></div>
 
-<button class="cancel" onclick="cancelOrder()">❌ ОТМЕНИТЬ</button>
-<button class="pay" onclick="pay()">💳 ЗАПЛАТИТЬ</button>
-<button class="support" onclick="supportPay()">❤️ ПОДДЕРЖКА</button>
+    <button class="action cancel" onclick="cancelOrder()">❌ CANCEL</button>
+    <button class="action payBtn" onclick="pay()">💳 PAY</button>
+    <button class="action support" onclick="supportPay()">❤️ SUPPORT</button>
 
-</div>
+  </div>
 </div>
 
 <script>
 
-const items=[
-{id:"burger",name:"Burger",price:5},
-{id:"fries",name:"Fries",price:2},
-{id:"pizza",name:"Pizza",price:8}
-];
-
-let cart={};
-
-function add(id){
-cart[id]=(cart[id]||0)+1;
-render();
+const tg = window.Telegram.WebApp;
+if(tg){
+  tg.expand();
+  const user = tg.initDataUnsafe?.user;
+  if(user){
+    document.getElementById("logo").innerText = user.first_name[0];
+  }
 }
 
+const items = [
+{id:"burger",name:"Burger",price:4.99,icon:"🍔"},
+{id:"fries",name:"Fries",price:1.49,icon:"🍟"},
+{id:"hotdog",name:"Hotdog",price:3.49,icon:"🌭"},
+{id:"tako",name:"Tako",price:3.99,icon:"🌮"},
+{id:"pizza",name:"Pizza",price:7.99,icon:"🍕"},
+{id:"donut",name:"Donut",price:1.49,icon:"🍩"},
+{id:"popcorn",name:"Popcorn",price:1.99,icon:"🍿"},
+{id:"coke",name:"Coke",price:1.49,icon:"🥤"},
+{id:"cake",name:"Cake",price:10.99,icon:"🍰"}
+];
+
+let cart = {};
+
+function qty(id){return cart[id]||0}
+
+function add(id){cart[id]=(cart[id]||0)+1;render();}
 function removeItem(id){
-cart[id]=Math.max(0,(cart[id]||0)-1);
-if(cart[id]==0)delete cart[id];
-render();
+  cart[id]=Math.max(0,qty(id)-1);
+  if(cart[id]==0) delete cart[id];
+  render();
 }
 
 function total(){
-let t=0;
-items.forEach(i=>{
-t+= (cart[i.id]||0)*i.price;
-});
-return t;
+  return items.reduce((s,i)=>s+qty(i.id)*i.price,0);
 }
 
 function render(){
-let html="";
-items.forEach(i=>{
-let q=cart[i.id]||0;
-html+=`
-<div class="item">
-<h2>${i.name} $${i.price}</h2>
-${q>0?
-`<button class="minus" onclick="removeItem('${i.id}')">-</button>
-<span>${q}</span>
-<button class="add" onclick="add('${i.id}')">+</button>`
-:
-`<button class="add" onclick="add('${i.id}')">ADD</button>`
-}
-</div>`;
-});
-document.getElementById("menu").innerHTML=html;
-document.getElementById("payText").innerText="Pay $"+total();
+  let html="";
+  items.forEach(i=>{
+    let q=qty(i.id);
+    html+=`
+    <div class="item">
+      ${q?`<div class="badge">${q}</div>`:""}
+      <div class="pic">${i.icon}</div>
+      <div class="name">${i.name}</div>
+      <div class="price">$${i.price}</div>
+      ${
+        q
+        ? `<div class="qtyBox">
+            <button class="smallBtn minus" onclick="removeItem('${i.id}')">−</button>
+            <button class="smallBtn plus" onclick="add('${i.id}')">+</button>
+          </div>`
+        : `<button class="add" onclick="add('${i.id}')">ADD</button>`
+      }
+    </div>`;
+  });
+
+  menuGrid.innerHTML = html;
+  payText.innerText = "Pay $" + total().toFixed(2);
 }
 
 function openOrder(){
-document.getElementById("modal").style.display="flex";
-renderOrder();
+  modal.style.display="flex";
+  renderOrder();
 }
 
 function renderOrder(){
-let html="";
-items.forEach(i=>{
-if(cart[i.id]){
-html+=`${i.name} x${cart[i.id]}<br>`;
-}
-});
-document.getElementById("orderList").innerHTML=html||"Empty";
+  let html="";
+  items.forEach(i=>{
+    if(cart[i.id]){
+      html+=`<div class="row">
+        <span>${i.name} × ${cart[i.id]}</span>
+        <b>$${(i.price*cart[i.id]).toFixed(2)}</b>
+      </div>`;
+    }
+  });
+  orderList.innerHTML = html || "Empty";
+  totalText.innerText = "Total: $" + total().toFixed(2);
 }
 
 function cancelOrder(){
-cart={};
-closeOrder();
-render();
+  if(confirm("Cancel order?")){
+    cart = {};
+    closeOrder();
+    render();
+  }
 }
 
 function pay(){
-alert("Оплачено $"+total());
-cart={};
-closeOrder();
-render();
+  sendOrder("order");
 }
 
 function supportPay(){
-alert("Спасибо за поддержку $"+total());
-cart={};
-closeOrder();
-render();
+  sendOrder("support");
+}
+
+function sendOrder(type){
+  const order = items
+    .filter(i => cart[i.id])
+    .map(i => `${i.name} x${cart[i.id]}`)
+    .join(", ");
+
+  const data = {
+    type:type,
+    order:order,
+    total:total().toFixed(2)
+  };
+
+  tg.sendData(JSON.stringify(data));
+
+  alert("Отправлено в бот ✅");
+  cart = {};
+  closeOrder();
+  render();
 }
 
 function closeOrder(){
-document.getElementById("modal").style.display="none";
+  modal.style.display="none";
 }
 
 render();
 
 </script>
-
 </body>
 </html>
