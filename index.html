@@ -1,187 +1,624 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
 <meta charset="UTF-8">
-<title>Sketch Runner 199K</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Code World: From Scratch</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
+:root{
+  --bg:#050816;
+  --card:#111827;
+  --card2:#1f2937;
+  --text:#f8fafc;
+  --muted:#cbd5e1;
+  --blue:#38bdf8;
+  --green:#4ade80;
+  --red:#fb7185;
+  --yellow:#facc15;
+  --purple:#a78bfa;
+  --orange:#fb923c;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{
   margin:0;
-  background:#0f172a;
-  color:white;
-  text-align:center;
-  font-family:Arial;
+  font-family:Arial,sans-serif;
+  background:
+    radial-gradient(circle at top left,rgba(56,189,248,.18),transparent 28%),
+    radial-gradient(circle at top right,rgba(168,139,250,.18),transparent 28%),
+    linear-gradient(180deg,#050816,#020617);
+  color:var(--text);
+  padding:12px;
 }
-canvas{
-  display:block;
-  margin:10px auto;
-  border-radius:12px;
+h1,h2,h3{margin:8px 0}
+p{color:var(--muted);line-height:1.35}
+.title{
+  text-align:center;
+  font-size:32px;
+  font-weight:900;
+  background:linear-gradient(90deg,#38bdf8,#4ade80,#facc15,#a78bfa);
+  -webkit-background-clip:text;
+  color:transparent;
+}
+.card{
+  background:rgba(17,24,39,.95);
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:22px;
+  padding:14px;
+  margin:10px 0;
+  box-shadow:0 14px 34px rgba(0,0,0,.32);
+}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.stat{
+  background:rgba(31,41,55,.95);
+  border-radius:16px;
+  padding:10px 5px;
+  text-align:center;
+  border:1px solid rgba(255,255,255,.08);
 }
 button{
-  padding:12px;
-  margin:5px;
-  border:none;
-  border-radius:10px;
-  font-weight:bold;
+  width:100%;
+  border:0;
+  border-radius:16px;
+  padding:12px 8px;
+  margin:4px 0;
+  font-size:14px;
+  font-weight:900;
+  color:#07111f;
+  background:var(--blue);
 }
+button:active{transform:scale(.97)}
+.good{background:var(--green)}
+.bad{background:var(--red)}
+.gold{background:var(--yellow)}
+.purple{background:var(--purple)}
+.orange{background:var(--orange)}
+.dark{background:#334155;color:white}
+.hidden{display:none!important}
+.badge{
+  display:inline-block;
+  padding:6px 10px;
+  border-radius:999px;
+  background:rgba(255,255,255,.12);
+  margin:3px;
+}
+.nav{
+  position:sticky;
+  bottom:0;
+  z-index:50;
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:5px;
+  background:rgba(2,6,23,.96);
+  backdrop-filter:blur(8px);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:18px;
+  padding:8px;
+}
+.nav button{font-size:11px;padding:9px 3px;margin:0}
+.codebox{
+  background:#020617;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:16px;
+  padding:12px;
+  font-family:monospace;
+  color:#e2e8f0;
+  text-align:left;
+  white-space:pre-wrap;
+  overflow:auto;
+}
+input{
+  width:100%;
+  padding:12px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.14);
+  background:#0f172a;
+  color:white;
+  font-size:15px;
+  margin:5px 0;
+}
+.skill{
+  background:rgba(31,41,55,.95);
+  border-radius:16px;
+  padding:12px;
+  border:1px solid rgba(255,255,255,.08);
+}
+.progress{
+  width:100%;
+  height:13px;
+  background:#020617;
+  border-radius:999px;
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,.12);
+}
+.progress div{height:100%;background:var(--green);width:0%}
 </style>
 </head>
 <body>
 
-<h2>🎮 Sketch Runner 199K</h2>
+<h1 class="title">💻 Code World: From Scratch</h1>
+<p id="hello" style="text-align:center">Игрок без регистрации</p>
 
-<div id="drawUI">
-<p>Нарисуй персонажа</p>
-<canvas id="draw" width="300" height="300" style="background:white"></canvas>
-<br>
-<button onclick="clearDraw()">Очистить</button>
-<button onclick="startGame()">Оживить</button>
+<div class="stats">
+  <div class="stat">💰<br><b id="coins">0</b><br><small>монеты</small></div>
+  <div class="stat">⭐<br><b id="level">1</b><br><small>уровень</small></div>
+  <div class="stat">🪲<br><b id="bugs">0</b><br><small>баги</small></div>
+  <div class="stat">🏆<br><b id="rank">Newbie</b><br><small>ранг</small></div>
 </div>
 
-<div id="gameUI" style="display:none">
-<p id="msg">Выживай 😈</p>
-<canvas id="game" width="600" height="300"></canvas>
+<section id="pageWork" class="page">
+  <div class="card">
+    <h2>📋 Проект</h2>
+    <p>Выбери проект и собери правильные действия. Ошибки добавляют баги.</p>
+    <button class="good" onclick="newProject()">🧑‍💻 Новый проект</button>
+  </div>
+
+  <div id="projectBox" class="card hidden"></div>
+
+  <div class="card">
+    <h2>🧩 Действия</h2>
+    <div id="actionButtons" class="grid"></div>
+    <button class="good" onclick="submitProject()">✅ Отправить проект</button>
+    <button class="bad" onclick="clearChoice()">🗑 Очистить выбор</button>
+  </div>
+</section>
+
+<section id="pageSkills" class="page hidden">
+  <div class="card">
+    <h2>🧠 Навыки</h2>
+    <div id="skillsBox" class="grid"></div>
+  </div>
+</section>
+
+<section id="pageShop" class="page hidden">
+  <div class="card">
+    <h2>🛒 Магазин</h2>
+    <div class="grid">
+      <button onclick="buyItem('laptop')">💻 Ноутбук — <span id="costLaptop"></span></button>
+      <button onclick="buyItem('keyboard')">⌨️ Клавиатура — <span id="costKeyboard"></span></button>
+      <button onclick="buyItem('coffee')">☕ Кофе-машина — <span id="costCoffee"></span></button>
+      <button onclick="buyItem('server')">🖥 Сервер — <span id="costServer"></span></button>
+    </div>
+  </div>
+  <div class="card">
+    <h2>🎁 Награды</h2>
+    <button class="gold" onclick="dailyReward()">🎁 Ежедневная награда</button>
+    <button class="purple" onclick="twentyReward()">⏱ Награда раз в 20 минут</button>
+    <p id="rewardText"></p>
+  </div>
+</section>
+
+<section id="pageProfile" class="page hidden">
+  <div class="card">
+    <h2>👤 Профиль</h2>
+    <div id="profileBox"></div>
+  </div>
+  <div class="card">
+    <h2>🏆 Миссии</h2>
+    <div id="missionsBox"></div>
+  </div>
+</section>
+
+<section id="pagePromo" class="page hidden">
+  <div class="card">
+    <h2>🎟 Промокод</h2>
+    <input id="promoInput" placeholder="Введите секретный код">
+    <button class="gold" onclick="usePromo()">Активировать</button>
+    <p>Коды можно выдавать отдельно. В интерфейсе они специально не перечислены.</p>
+  </div>
+</section>
+
+<div class="nav">
+  <button onclick="showPage('pageWork')">💻</button>
+  <button onclick="showPage('pageSkills')">🧠</button>
+  <button onclick="showPage('pageShop')">🛒</button>
+  <button onclick="showPage('pageProfile')">👤</button>
+  <button onclick="showPage('pagePromo')">🎟</button>
 </div>
 
 <script>
-// ---------- DRAW ----------
-const drawCanvas = document.getElementById("draw");
-const dctx = drawCanvas.getContext("2d");
-let drawing=false;
+const tg = window.Telegram?.WebApp;
+if(tg) tg.expand();
 
-drawCanvas.onmousedown = ()=> drawing=true;
-drawCanvas.onmouseup = ()=> drawing=false;
-drawCanvas.onmousemove = (e)=>{
-  if(!drawing) return;
-  let rect = drawCanvas.getBoundingClientRect();
-  dctx.fillStyle="black";
-  dctx.fillRect(e.clientX-rect.left, e.clientY-rect.top, 4,4);
+const ACTIONS = [
+  "🟦 Scratch: движение",
+  "🟨 Scratch: событие",
+  "🟪 Scratch: повторять",
+  "🟩 Scratch: если",
+  "🌐 HTML: структура",
+  "🎨 CSS: стиль",
+  "⚙️ JavaScript: логика",
+  "🐍 Python: функция",
+  "🔁 Python: цикл",
+  "🧪 Тестирование",
+  "🪲 Fix Bug",
+  "🗄 SQL: база данных",
+  "🤖 Bot API",
+  "🔐 Security",
+  "🚀 Deploy"
+];
+
+const PROJECTS = [
+  {
+    title:"Scratch: кот двигается",
+    tech:"Scratch",
+    minLevel:1,
+    text:"Сделай мини-анимацию: кот должен стартовать по событию, двигаться и повторять действие.",
+    need:["🟨 Scratch: событие","🟦 Scratch: движение","🟪 Scratch: повторять"],
+    reward:120,xp:35
+  },
+  {
+    title:"Scratch: поймай яблоко",
+    tech:"Scratch",
+    minLevel:1,
+    text:"Сделай простую игру: объект двигается, игрок ловит его, условие проверяет попадание.",
+    need:["🟨 Scratch: событие","🟦 Scratch: движение","🟩 Scratch: если"],
+    reward:150,xp:45
+  },
+  {
+    title:"HTML: страница профиля",
+    tech:"HTML",
+    minLevel:2,
+    text:"Собери простую веб-страницу: нужна структура, стиль и тест.",
+    need:["🌐 HTML: структура","🎨 CSS: стиль","🧪 Тестирование"],
+    reward:180,xp:50
+  },
+  {
+    title:"JavaScript: кнопка клика",
+    tech:"JavaScript",
+    minLevel:3,
+    text:"Сделай кнопку, которая считает клики и обновляет интерфейс.",
+    need:["🌐 HTML: структура","⚙️ JavaScript: логика","🧪 Тестирование"],
+    reward:220,xp:65
+  },
+  {
+    title:"Python: калькулятор",
+    tech:"Python",
+    minLevel:4,
+    text:"Напиши логику калькулятора: функция, цикл ввода и проверка ошибок.",
+    need:["🐍 Python: функция","🔁 Python: цикл","🧪 Тестирование"],
+    reward:260,xp:75
+  },
+  {
+    title:"Python: баг-фикс",
+    tech:"Python",
+    minLevel:4,
+    text:"Проект сломан. Нужно найти баг, исправить и протестировать.",
+    need:["🪲 Fix Bug","🐍 Python: функция","🧪 Тестирование"],
+    reward:300,xp:90
+  },
+  {
+    title:"SQL: таблица игроков",
+    tech:"SQL",
+    minLevel:5,
+    text:"Сделай таблицу игроков и подготовь данные для сохранения прогресса.",
+    need:["🗄 SQL: база данных","🐍 Python: функция","🧪 Тестирование"],
+    reward:360,xp:105
+  },
+  {
+    title:"Telegram Bot",
+    tech:"Bot",
+    minLevel:6,
+    text:"Собери Telegram-бота: логика, Bot API, деплой.",
+    need:["🐍 Python: функция","🤖 Bot API","🚀 Deploy"],
+    reward:450,xp:130
+  },
+  {
+    title:"JavaScript WebApp",
+    tech:"JavaScript",
+    minLevel:7,
+    text:"Сделай WebApp: интерфейс, логика, деплой и тестирование.",
+    need:["🌐 HTML: структура","🎨 CSS: стиль","⚙️ JavaScript: логика","🚀 Deploy"],
+    reward:520,xp:150
+  },
+  {
+    title:"Безопасный сайт",
+    tech:"Security",
+    minLevel:8,
+    text:"Нужно сделать сайт и закрыть слабые места.",
+    need:["🌐 HTML: структура","⚙️ JavaScript: логика","🔐 Security","🧪 Тестирование"],
+    reward:650,xp:180
+  },
+  {
+    title:"Fullstack мини-проект",
+    tech:"Fullstack",
+    minLevel:10,
+    text:"Финальный проект: сайт, JS, Python, база, деплой и тестирование.",
+    need:["🌐 HTML: структура","🎨 CSS: стиль","⚙️ JavaScript: логика","🐍 Python: функция","🗄 SQL: база данных","🚀 Deploy"],
+    reward:1000,xp:300
+  }
+];
+
+const PROMOS = {
+  START:{coins:500,xp:50,bugs:-1},
+  SCRATCH:{coins:300,xp:100,bugs:0},
+  PYTHON:{coins:800,xp:200,bugs:-2},
+  JAVASCRIPT:{coins:800,xp:200,bugs:-2},
+  FULLSTACK:{coins:2000,xp:500,bugs:-5}
 };
 
-function clearDraw(){
-  dctx.fillStyle="white";
-  dctx.fillRect(0,0,300,300);
+let game = load();
+
+function defaultGame(){
+  return {
+    coins:500,xp:0,level:1,bugs:0,
+    completed:0,failed:0,streak:0,bestStreak:0,totalEarned:0,
+    active:null,choice:[],
+    skills:{scratch:1,html:0,css:0,js:0,python:0,sql:0,bot:0,security:0},
+    items:{laptop:0,keyboard:0,coffee:0,server:0},
+    usedPromos:[],lastDaily:0,lastTwenty:0,missions:[]
+  };
 }
 
-// ---------- GAME ----------
-let player, obstacles=[], chaos=[], gameOver=false;
-let gravity=0.6, speed=4, flip=false, autoJump=false;
-let score=0, level=1;
-
-function startGame(){
-  document.getElementById("drawUI").style.display="none";
-  document.getElementById("gameUI").style.display="block";
-
-  player = {x:60,y:200,w:30,h:30,vy:0};
-  obstacles=[];
-  chaos=[];
-  gameOver=false;
-  score=0;
-
-  loop();
+function load(){
+  try{return JSON.parse(localStorage.getItem("codeWorldFromScratch")) || defaultGame()}
+  catch(e){return defaultGame()}
 }
-
-function spawnObstacle(){
-  obstacles.push({x:600,y:220,w:30,h:30});
+function save(){localStorage.setItem("codeWorldFromScratch",JSON.stringify(game))}
+function showPage(id){
+  document.querySelectorAll(".page").forEach(p=>p.classList.add("hidden"));
+  document.getElementById(id).classList.remove("hidden");
+  render();
 }
-
-function spawnChaos(){
-  chaos.push({
-    x:Math.random()*600,
-    y:-40,
-    vx:(Math.random()-0.5)*5,
-    vy:Math.random()*4+2,
-    size:20
-  });
+function render(){
+  renderTop(); renderActions(); renderProject(); renderSkills(); renderShop(); renderProfile(); save();
 }
+function renderTop(){
+  coins.textContent = game.coins;
+  level.textContent = game.level;
+  bugs.textContent = game.bugs;
+  rank.textContent = getRank();
+  const user = tg?.initDataUnsafe?.user;
+  hello.textContent = user ? "Игрок: " + user.first_name : "Игрок без регистрации";
+}
+function getRank(){
+  if(game.level>=12) return "Tech Lead";
+  if(game.level>=9) return "Senior";
+  if(game.level>=5) return "Middle";
+  if(game.level>=2) return "Junior";
+  return "Newbie";
+}
+function availableProjects(){
+  return PROJECTS.filter(p=>p.minLevel<=game.level);
+}
+function random(arr){return arr[Math.floor(Math.random()*arr.length)]}
 
-function loop(){
-  const ctx = document.getElementById("game").getContext("2d");
-  ctx.clearRect(0,0,600,300);
-
-  if(gameOver){
-    ctx.fillText("💀 GAME OVER (клик = рестарт)",200,150);
+function newProject(){
+  if(game.active){
+    alert("Сначала закончи текущий проект.");
     return;
   }
-
-  // гравитация
-  player.vy += flip ? -gravity : gravity;
-  player.y += player.vy;
-
-  if(!flip && player.y>200){ player.y=200; player.vy=0;}
-  if(flip && player.y<50){ player.y=50; player.vy=0;}
-
-  // хаос
-  if(Math.random()<0.03) spawnObstacle();
-  if(Math.random()<0.02) spawnChaos();
-
-  // троллинг
-  if(Math.random()<0.005){
-    flip=!flip;
-    msg("Гравитация сломалась 😈");
+  const p = random(availableProjects());
+  const bonus = 1 + game.items.laptop*.08 + game.items.coffee*.05;
+  game.active = {
+    ...p,
+    reward:Math.floor(p.reward*bonus),
+    xp:Math.floor(p.xp*(1+game.items.server*.05))
+  };
+  game.choice = [];
+  render();
+}
+function renderProject(){
+  if(!game.active){
+    projectBox.classList.add("hidden");
+    projectBox.innerHTML = "";
+    return;
   }
-
-  if(Math.random()<0.005){
-    autoJump=!autoJump;
-    msg("Он живой...");
-  }
-
-  if(autoJump && Math.random()<0.05){
-    player.vy = flip ? 10 : -10;
-  }
-
-  // obstacles
-  obstacles.forEach(o=>{
-    o.x -= speed;
-    ctx.fillStyle="red";
-    ctx.fillRect(o.x,o.y,o.w,o.h);
-    if(hit(player,o)) gameOver=true;
+  projectBox.classList.remove("hidden");
+  projectBox.innerHTML = `
+    <h2>${game.active.title}</h2>
+    <p>${game.active.text}</p>
+    <p><span class="badge">${game.active.tech}</span> <span class="badge">Награда: ${game.active.reward} 🪙</span> <span class="badge">XP: ${game.active.xp}</span></p>
+    <div class="codebox">${exampleCode(game.active.tech)}</div>
+    <p>Выбрано:</p>
+    <div>${game.choice.length ? game.choice.map(x=>`<span class="badge">${x}</span>`).join("") : "Пока ничего"}</div>
+  `;
+}
+function exampleCode(tech){
+  if(tech==="Scratch") return "when green flag clicked\\nrepeat 10\\n  move 10 steps";
+  if(tech==="HTML") return "<div class='profile'>\\n  <h1>Hello</h1>\\n</div>";
+  if(tech==="JavaScript") return "button.onclick = () => {\\n  score++;\\n  updateUI();\\n}";
+  if(tech==="Python") return "def calculate(a, b):\\n    return a + b";
+  if(tech==="SQL") return "CREATE TABLE players (\\n  id INTEGER,\\n  score INTEGER\\n);";
+  if(tech==="Bot") return "bot.on('/start', send_menu)";
+  if(tech==="Security") return "validate(input)\\nsanitize(output)";
+  return "project.build()";
+}
+function renderActions(){
+  actionButtons.innerHTML = "";
+  ACTIONS.forEach(a=>{
+    const b = document.createElement("button");
+    b.textContent = a;
+    b.onclick = ()=>chooseAction(a);
+    actionButtons.appendChild(b);
   });
-
-  // chaos objects
-  chaos.forEach(c=>{
-    c.x += c.vx;
-    c.y += c.vy;
-    ctx.fillStyle="yellow";
-    ctx.fillRect(c.x,c.y,c.size,c.size);
-    if(hit(player,c)) gameOver=true;
+}
+function chooseAction(a){
+  if(!game.active){
+    alert("Сначала возьми проект.");
+    return;
+  }
+  game.choice.push(a);
+  render();
+}
+function clearChoice(){
+  game.choice = [];
+  render();
+}
+function submitProject(){
+  if(!game.active){
+    alert("Нет активного проекта.");
+    return;
+  }
+  const need = [...game.active.need].sort();
+  const choice = [...game.choice].sort();
+  if(JSON.stringify(need)!==JSON.stringify(choice)){
+    game.bugs++;
+    game.failed++;
+    game.streak = 0;
+    alert("🪲 Ошибка в проекте! Получен баг.\\nНужно было: "+need.join(", "));
+    if(game.bugs>=5){
+      game.coins = Math.max(0,game.coins-150);
+      alert("Слишком много багов: -150 монет.");
+    }
+    game.active = null;
+    game.choice = [];
+    render();
+    return;
+  }
+  game.coins += game.active.reward;
+  game.xp += game.active.xp;
+  game.completed++;
+  game.streak++;
+  game.bestStreak = Math.max(game.bestStreak,game.streak);
+  game.totalEarned += game.active.reward;
+  game.bugs = Math.max(0,game.bugs-1);
+  improveSkill(game.active.tech);
+  alert("✅ Проект готов!\\n+"+game.active.reward+" монет\\n+"+game.active.xp+" XP");
+  game.active = null;
+  game.choice = [];
+  levelUp();
+  checkMissions();
+  render();
+}
+function improveSkill(tech){
+  if(tech==="Scratch") game.skills.scratch++;
+  if(tech==="HTML"){game.skills.html++; game.skills.css++}
+  if(tech==="JavaScript") game.skills.js++;
+  if(tech==="Python") game.skills.python++;
+  if(tech==="SQL") game.skills.sql++;
+  if(tech==="Bot") game.skills.bot++;
+  if(tech==="Security") game.skills.security++;
+  if(tech==="Fullstack"){game.skills.html++;game.skills.css++;game.skills.js++;game.skills.python++;game.skills.sql++}
+}
+function levelUp(){
+  while(game.xp>=game.level*120){
+    game.xp -= game.level*120;
+    game.level++;
+    game.coins += 250;
+    alert("⭐ Новый уровень: "+game.level+"! +250 монет");
+  }
+}
+function renderSkills(){
+  const names = {
+    scratch:"Scratch",html:"HTML",css:"CSS",js:"JavaScript",python:"Python",sql:"SQL",bot:"Bot API",security:"Security"
+  };
+  skillsBox.innerHTML = "";
+  Object.entries(game.skills).forEach(([k,v])=>{
+    const percent = Math.min(100,v*12);
+    const div = document.createElement("div");
+    div.className = "skill";
+    div.innerHTML = `<b>${names[k]}</b><p>ур. ${v}</p><div class="progress"><div style="width:${percent}%"></div></div>`;
+    skillsBox.appendChild(div);
   });
-
-  // игрок
-  ctx.fillStyle="cyan";
-  ctx.fillRect(player.x,player.y,player.w,player.h);
-
-  score++;
-  if(score % 500 === 0){
-    level++;
-    speed += 0.5;
-    msg("Уровень "+level);
+}
+function itemCost(type){
+  const base = {laptop:600,keyboard:400,coffee:700,server:1200}[type];
+  return base*(game.items[type]+1);
+}
+function renderShop(){
+  costLaptop.textContent = itemCost("laptop");
+  costKeyboard.textContent = itemCost("keyboard");
+  costCoffee.textContent = itemCost("coffee");
+  costServer.textContent = itemCost("server");
+}
+function buyItem(type){
+  const cost = itemCost(type);
+  if(game.coins<cost){
+    alert("Не хватает монет.");
+    return;
   }
-
-  ctx.fillText("Score: "+score,10,20);
-
-  requestAnimationFrame(loop);
+  game.coins -= cost;
+  game.items[type]++;
+  alert("✅ Куплено!");
+  render();
 }
-
-function hit(a,b){
-  return a.x<b.x+b.w &&
-         a.x+a.w>b.x &&
-         a.y<b.y+b.h &&
-         a.y+a.h>b.y;
-}
-
-function msg(text){
-  document.getElementById("msg").innerText = text;
-}
-
-// управление
-document.addEventListener("click", ()=>{
-  if(gameOver){
-    location.reload();
-  } else {
-    player.vy = flip ? 10 : -10;
+function dailyReward(){
+  const now = Date.now();
+  if(now-game.lastDaily<86400000){
+    rewardText.textContent = "Ежедневная награда ещё не готова.";
+    return;
   }
-});
+  game.lastDaily = now;
+  game.coins += 1000;
+  game.xp += 120;
+  rewardText.textContent = "🎁 +1000 монет и +120 XP";
+  levelUp();
+  render();
+}
+function twentyReward(){
+  const now = Date.now();
+  if(now-game.lastTwenty<1200000){
+    const left = Math.ceil((1200000-(now-game.lastTwenty))/60000);
+    rewardText.textContent = "Будет через ~"+left+" мин.";
+    return;
+  }
+  game.lastTwenty = now;
+  game.coins += 250;
+  rewardText.textContent = "⏱ +250 монет";
+  render();
+}
+function renderProfile(){
+  profileBox.innerHTML = `
+    <p>Ранг: <b>${getRank()}</b></p>
+    <p>💰 Монеты: <b>${game.coins}</b></p>
+    <p>⭐ Уровень: <b>${game.level}</b></p>
+    <p>✨ XP: <b>${game.xp}/${game.level*120}</b></p>
+    <p>🪲 Баги: <b>${game.bugs}</b></p>
+    <p>✅ Проекты: <b>${game.completed}</b></p>
+    <p>❌ Ошибки: <b>${game.failed}</b></p>
+    <p>🔥 Серия: <b>${game.streak}</b> / рекорд ${game.bestStreak}</p>
+    <p>📈 Всего заработано: <b>${game.totalEarned}</b></p>
+  `;
+  missionsBox.innerHTML = `
+    <p>${game.completed>=1?"✅":"⬜"} Первый проект</p>
+    <p>${game.completed>=10?"✅":"⬜"} 10 проектов</p>
+    <p>${game.level>=5?"✅":"⬜"} Дойти до Middle</p>
+    <p>${game.skills.python>=3?"✅":"⬜"} Python ур. 3</p>
+    <p>${game.skills.js>=3?"✅":"⬜"} JavaScript ур. 3</p>
+    <p>${game.bestStreak>=5?"✅":"⬜"} 5 проектов подряд без ошибки</p>
+  `;
+}
+function checkMissions(){
+  const rewards = [
+    ["first",game.completed>=1],
+    ["ten",game.completed>=10],
+    ["middle",game.level>=5],
+    ["python3",game.skills.python>=3],
+    ["js3",game.skills.js>=3],
+    ["streak5",game.bestStreak>=5]
+  ];
+  rewards.forEach(([id,ok])=>{
+    if(ok && !game.missions.includes(id)){
+      game.missions.push(id);
+      game.coins += 500;
+      alert("🏆 Миссия выполнена! +500 монет");
+    }
+  });
+}
+function usePromo(){
+  const code = promoInput.value.trim().toUpperCase();
+  if(!PROMOS[code]){
+    alert("Нет такого промокода.");
+    return;
+  }
+  if(game.usedPromos.includes(code)){
+    alert("Промокод уже использован.");
+    return;
+  }
+  const p = PROMOS[code];
+  game.coins += p.coins;
+  game.xp += p.xp;
+  game.bugs = Math.max(0,game.bugs+p.bugs);
+  game.usedPromos.push(code);
+  alert("🎟 Промокод активирован!");
+  levelUp();
+  render();
+}
+
+render();
 </script>
-
 </body>
 </html>
