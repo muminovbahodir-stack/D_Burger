@@ -2,50 +2,145 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>D Burger</title>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
+
 <style>
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{margin:0;font-family:Arial,sans-serif;background:#111;color:#fff}
-.header{padding:18px 16px 10px;background:linear-gradient(135deg,#2b1b13,#111)}
-.brand{display:flex;align-items:center;gap:12px}.logo{width:54px;height:54px;border-radius:50%;background:#e21d1d;display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:900;color:#ffc400}
-.brand h1{margin:0;font-size:28px}.brand p{margin:2px 0 0;color:#aaa}
-.hero{margin:16px 0 6px;height:150px;border-radius:12px;background:linear-gradient(135deg,#ff8a1d,#a73512);display:flex;align-items:center;justify-content:center;font-size:82px;box-shadow:0 8px 25px rgba(0,0,0,.35)}
-.pay{margin:12px 16px;padding:18px;background:#1d1d1d;border-radius:14px;text-align:center;color:#ddd;font-size:24px;font-weight:800}
-.menu{background:#171717;border-radius:26px 26px 0 0;padding:18px 14px 96px;min-height:70vh}
-.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px 12px}.item{text-align:center;position:relative}.pic{font-size:70px;height:82px;display:flex;align-items:center;justify-content:center}.name{font-size:20px;font-weight:900;margin-top:4px}.price{color:#eee}
-.btn{width:100%;border:0;border-radius:12px;padding:12px 0;margin-top:10px;background:#ffae16;color:white;font-size:20px;font-weight:900}.qtyBox{display:flex;justify-content:center;gap:8px;margin-top:10px}.smallBtn{width:54px;height:44px;border:0;border-radius:10px;font-size:34px;font-weight:900;color:white}.minus{background:#ef4444}.plus{background:#ffae16}
-.badge{position:absolute;top:0;right:24px;width:34px;height:34px;border-radius:50%;background:#ffb21a;display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:900;color:#fff}
-.bottom{position:fixed;left:0;right:0;bottom:0;background:#2db84d;padding:18px 14px 22px;z-index:10}.bottom button{width:100%;border:0;background:transparent;color:white;font-size:22px;font-weight:900}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:flex-end;z-index:20}.sheet{background:#171717;width:100%;border-radius:24px 24px 0 0;padding:18px;max-height:75vh;overflow:auto}.row{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid #333;padding:12px 0;font-size:18px}.total{font-size:24px;font-weight:900;margin:18px 0}.close{background:#333!important;color:white!important}.payBtn{background:#2db84d!important;color:white!important}.sheet button{width:100%;border:0;border-radius:14px;padding:14px;margin:6px 0;font-size:20px;font-weight:900}
+body{margin:0;font-family:Arial;background:#111;color:#fff}
+.header{padding:20px;background:#1a1a1a}
+.logo{width:50px;height:50px;border-radius:50%;background:red;display:flex;align-items:center;justify-content:center;font-size:30px}
+.hero{height:120px;background:orange;margin:10px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:60px}
+.menu{padding:10px}
+.item{text-align:center;margin-bottom:20px}
+button{padding:10px;border-radius:10px;border:0;margin:5px;font-size:16px}
+.add{background:#ffae16;color:#fff}
+.minus{background:#ef4444;color:#fff}
+.pay{background:#2db84d;color:#fff}
+.support{background:#ffae16;color:#fff}
+.cancel{background:#444;color:#fff}
+.bottom{position:fixed;bottom:0;width:100%;background:#2db84d;padding:15px;text-align:center}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:flex-end}
+.sheet{background:#111;width:100%;padding:20px;border-radius:20px 20px 0 0}
 </style>
 </head>
+
 <body>
-<div class="header"><div class="brand"><div class="logo">D</div><div><h1>D Burger</h1><p>bot</p></div></div><div class="hero">🍔🍟</div></div>
-<div class="pay" id="payText">Pay $0.00</div>
-<div class="menu"><div class="grid" id="menuGrid"></div></div>
-<div class="bottom"><button onclick="openOrder()">VIEW ORDER</button></div>
-<div class="modal" id="modal"><div class="sheet"><h2>🧾 Your order</h2><div id="orderList"></div><div class="total" id="totalText">Total: $0.00</div><button class="payBtn" onclick="pay()">PAY</button><button class="close" onclick="closeOrder()">CLOSE</button></div></div>
+
+<div class="header">
+<div class="logo">D</div>
+<div class="hero">🍔🍟</div>
+</div>
+
+<div id="payText">Pay $0</div>
+
+<div class="menu" id="menu"></div>
+
+<div class="bottom">
+<button onclick="openOrder()">VIEW ORDER</button>
+</div>
+
+<div class="modal" id="modal">
+<div class="sheet">
+<div id="orderList"></div>
+
+<button class="cancel" onclick="cancelOrder()">❌ ОТМЕНИТЬ</button>
+<button class="pay" onclick="pay()">💳 ЗАПЛАТИТЬ</button>
+<button class="support" onclick="supportPay()">❤️ ПОДДЕРЖКА</button>
+
+</div>
+</div>
+
 <script>
-const tg=window.Telegram?.WebApp;if(tg)tg.expand();
+
 const items=[
-{id:"burger",name:"Burger",price:4.99,icon:"🍔"},{id:"fries",name:"Fries",price:1.49,icon:"🍟"},{id:"hotdog",name:"Hotdog",price:3.49,icon:"🌭"},
-{id:"tako",name:"Tako",price:3.99,icon:"🌮"},{id:"pizza",name:"Pizza",price:7.99,icon:"🍕"},{id:"donut",name:"Donut",price:1.49,icon:"🍩"},
-{id:"popcorn",name:"Popcorn",price:1.99,icon:"🍿"},{id:"coke",name:"Coke",price:1.49,icon:"🥤"},{id:"cake",name:"Cake",price:10.99,icon:"🍰"}
+{id:"burger",name:"Burger",price:5},
+{id:"fries",name:"Fries",price:2},
+{id:"pizza",name:"Pizza",price:8}
 ];
-let cart=JSON.parse(localStorage.getItem("dBurgerCart")||"{}");
-function save(){localStorage.setItem("dBurgerCart",JSON.stringify(cart))}
-function qty(id){return cart[id]||0}
-function add(id){cart[id]=qty(id)+1;save();render()}
-function removeItem(id){cart[id]=Math.max(0,qty(id)-1);if(cart[id]===0)delete cart[id];save();render()}
-function total(){return items.reduce((s,i)=>s+qty(i.id)*i.price,0)}
-function render(){const grid=document.getElementById("menuGrid");grid.innerHTML="";items.forEach(item=>{const q=qty(item.id);const div=document.createElement("div");div.className="item";div.innerHTML=(q?`<div class="badge">${q}</div>`:"")+`<div class="pic">${item.icon}</div><div class="name">${item.name} <span class="price">· $${item.price.toFixed(2)}</span></div>`+(q?`<div class="qtyBox"><button class="smallBtn minus" onclick="removeItem('${item.id}')">−</button><button class="smallBtn plus" onclick="add('${item.id}')">+</button></div>`:`<button class="btn" onclick="add('${item.id}')">ADD</button>`);grid.appendChild(div)});document.getElementById("payText").textContent="Pay $"+total().toFixed(2);renderOrder()}
-function renderOrder(){const box=document.getElementById("orderList");box.innerHTML="";const selected=items.filter(i=>qty(i.id)>0);if(!selected.length){box.innerHTML="<p>Order is empty</p>"}else{selected.forEach(item=>{box.innerHTML+=`<div class="row"><span>${item.icon} ${item.name} × ${qty(item.id)}</span><b>$${(item.price*qty(item.id)).toFixed(2)}</b></div>`})}document.getElementById("totalText").textContent="Total: $"+total().toFixed(2)}
-function openOrder(){document.getElementById("modal").style.display="flex";renderOrder()}
-function closeOrder(){document.getElementById("modal").style.display="none"}
-function pay(){if(total()<=0){alert("Order is empty");return}alert("✅ Order paid: $"+total().toFixed(2));cart={};save();closeOrder();render()}
+
+let cart={};
+
+function add(id){
+cart[id]=(cart[id]||0)+1;
 render();
+}
+
+function removeItem(id){
+cart[id]=Math.max(0,(cart[id]||0)-1);
+if(cart[id]==0)delete cart[id];
+render();
+}
+
+function total(){
+let t=0;
+items.forEach(i=>{
+t+= (cart[i.id]||0)*i.price;
+});
+return t;
+}
+
+function render(){
+let html="";
+items.forEach(i=>{
+let q=cart[i.id]||0;
+html+=`
+<div class="item">
+<h2>${i.name} $${i.price}</h2>
+${q>0?
+`<button class="minus" onclick="removeItem('${i.id}')">-</button>
+<span>${q}</span>
+<button class="add" onclick="add('${i.id}')">+</button>`
+:
+`<button class="add" onclick="add('${i.id}')">ADD</button>`
+}
+</div>`;
+});
+document.getElementById("menu").innerHTML=html;
+document.getElementById("payText").innerText="Pay $"+total();
+}
+
+function openOrder(){
+document.getElementById("modal").style.display="flex";
+renderOrder();
+}
+
+function renderOrder(){
+let html="";
+items.forEach(i=>{
+if(cart[i.id]){
+html+=`${i.name} x${cart[i.id]}<br>`;
+}
+});
+document.getElementById("orderList").innerHTML=html||"Empty";
+}
+
+function cancelOrder(){
+cart={};
+closeOrder();
+render();
+}
+
+function pay(){
+alert("Оплачено $"+total());
+cart={};
+closeOrder();
+render();
+}
+
+function supportPay(){
+alert("Спасибо за поддержку $"+total());
+cart={};
+closeOrder();
+render();
+}
+
+function closeOrder(){
+document.getElementById("modal").style.display="none";
+}
+
+render();
+
 </script>
+
 </body>
 </html>
